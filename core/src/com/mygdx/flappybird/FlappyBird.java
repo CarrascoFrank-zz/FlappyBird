@@ -19,7 +19,7 @@ public class FlappyBird extends ApplicationAdapter {
 
     private float variacao =0;
     private float velocidadeQueda = 0;
-    private  float posicaoInicialVertical = alturaDispositivo/2;
+    private  float posicaoInicialVertical = 0;
 
 	public void create () {
         //Inicializando os elementos no app
@@ -37,6 +37,8 @@ public class FlappyBird extends ApplicationAdapter {
         larguraDispositivo = Gdx.graphics.getWidth();
         alturaDispositivo = Gdx.graphics.getHeight();
 
+        posicaoInicialVertical = alturaDispositivo/2;
+
 	}
 
 	@Override
@@ -49,8 +51,15 @@ public class FlappyBird extends ApplicationAdapter {
         if (variacao>2){
             variacao = 0;
         }
+
+
+        if(Gdx.input.justTouched()){
+            //Gdx.app.log("Toque", "Toque na tela!");
+            velocidadeQueda = -10;
+        }
+
         //Limitação de queda
-        if (posicaoInicialVertical > 0) {
+        if (posicaoInicialVertical > 10  || velocidadeQueda < 0) {
             posicaoInicialVertical = posicaoInicialVertical - velocidadeQueda;
         }
 
