@@ -4,9 +4,13 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
+import java.awt.Color;
 import java.util.Random;
+
+import static java.awt.Color.WHITE;
 
 public class FlappyBird extends ApplicationAdapter {
 
@@ -16,12 +20,16 @@ public class FlappyBird extends ApplicationAdapter {
     private Texture canoBot;
     private  Texture canoTop;
     private Random numeroRandomico;
+    private BitmapFont fonte;
+
 
 
     //Atributos de configuração
 
     private int larguraDispositivo;
     private int alturaDispositivo;
+    private int estadoJogo = 0; // 0 -> jogo nao iniciado || 1 -> Jogo Iniciado
+    private int pontuacao = 0; //pontuação do jogo
 
     private float variacao =0;
     private float velocidadeQueda = 0;
@@ -30,14 +38,17 @@ public class FlappyBird extends ApplicationAdapter {
     private float espacoEntreCanos;
     private  float deltaTime;
     private float alturaEntreCanosRandomica;
-
-
+    private boolean marcouPonto = false;
 
 	public void create () {
         //Inicializando os elementos no app
         Gdx.app.log("Create", "Inicializando o jogo");
         batch = new SpriteBatch();
         numeroRandomico = new Random();
+        fonte = new BitmapFont();
+        fonte.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+        fonte.getData().setScale(4);
+
         passaros = new Texture[3]; // array de texturas
 
         //Instanciando cada img no array com seu indice
@@ -66,44 +77,57 @@ public class FlappyBird extends ApplicationAdapter {
 
         deltaTime = Gdx.graphics.getDeltaTime();
         variacao += deltaTime * 10; //tempo para animação
-        posicaoMovimentoCanoHorizontal -= deltaTime * 100;//
-
-        velocidadeQueda++;
-
-
 
         //resetando a variação para repetir a animação
-        if (variacao>2){
+        if (variacao > 2) {
             variacao = 0;
         }
 
+        //Veirficaando o estado do jogo so para iniciar dps do primeiro toque
+        if (estadoJogo == 0) {
 
-        if(Gdx.input.justTouched()){
-            //Gdx.app.log("Toque", "Toque na tela!");
-            velocidadeQueda = -15;
-        }
+            if (Gdx.input.justTouched()) {
+                estadoJogo = 1;
+            }
 
-        //Limitação de queda
-        if (posicaoInicialVertical > 10  || velocidadeQueda < 0) {
-            posicaoInicialVertical = posicaoInicialVertical - velocidadeQueda;
-        }
+        }else {
+
+            posicaoMovimentoCanoHorizontal -= deltaTime * 100;//
+            velocidadeQueda++;
+
+            if (Gdx.input.justTouched()) {
+                //Gdx.app.log("Toque", "Toque na tela!");
+                velocidadeQueda = -15;
+            }
+
+            //Limitação de queda
+            if (posicaoInicialVertical > 10 || velocidadeQueda < 0) {
+                posicaoInicialVertical = posicaoInicialVertical - velocidadeQueda;
+            }
 
             //limitando e reseta o movimento do cano
-        if (posicaoMovimentoCanoHorizontal < - canoTop.getWidth()){
-            posicaoMovimentoCanoHorizontal = larguraDispositivo;
-            alturaEntreCanosRandomica = numeroRandomico.nextInt(400)-200;
+            if (posicaoMovimentoCanoHorizontal < -canoTop.getWidth()) {
+                posicaoMovimentoCanoHorizontal = larguraDispositivo;
+                alturaEntreCanosRandomica = numeroRandomico.nextInt(400) - 200;
+                marcouPonto = false;
+            }
+            //verifica pontuação
+            if (posicaoMovimentoCanoHorizontal < 120){
+                if (!marcouPonto) {
+                    pontuacao++;
+                    marcouPonto = true;
+                }
+            }
         }
 
-        batch.begin();//inciando a exibição da textura
+            batch.begin();//inciando a exibição da textura
 
-        batch.draw(fundo, 0, 0, larguraDispositivo, alturaDispositivo); //defininfo o prenchimento da tela com o fundo
-        batch.draw(canoTop, posicaoMovimentoCanoHorizontal, alturaDispositivo/2 + espacoEntreCanos/2 + alturaEntreCanosRandomica); //desenhando o cano top na tela
-        batch.draw(canoBot, posicaoMovimentoCanoHorizontal, alturaDispositivo/2 - canoBot.getHeight() - espacoEntreCanos/2 + alturaEntreCanosRandomica); //desenhando o cano bop na tela
-        batch.draw(passaros[(int) variacao], 120, posicaoInicialVertical);
-
-        batch.end();//Finalizando
-
-
+            batch.draw(fundo, 0, 0, larguraDispositivo, alturaDispositivo); //defininfo o prenchimento da tela com o fundo
+            batch.draw(canoTop, posicaoMovimentoCanoHorizontal, alturaDispositivo / 2 + espacoEntreCanos / 2 + alturaEntreCanosRandomica); //desenhando o cano top na tela
+            batch.draw(canoBot, posicaoMovimentoCanoHorizontal, alturaDispositivo / 2 - canoBot.getHeight() - espacoEntreCanos / 2 + alturaEntreCanosRandomica); //desenhando o cano bop na tela
+            batch.draw(passaros[(int) variacao], 120, posicaoInicialVertical);
+            fonte.draw(batch, String.valueOf(pontuacao), larguraDispositivo/2, alturaDispositivo-20);
+            batch.end();//Finalizando
 	}
 
 }
