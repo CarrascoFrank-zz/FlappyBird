@@ -6,6 +6,11 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.Intersector;
+import com.badlogic.gdx.math.Rectangle;
+import com.sun.org.apache.regexp.internal.RE;
 
 import java.awt.Color;
 import java.util.Random;
@@ -21,7 +26,9 @@ public class FlappyBird extends ApplicationAdapter {
     private  Texture canoTop;
     private Random numeroRandomico;
     private BitmapFont fonte;
-
+    private Circle passaroCirculo;
+    private Rectangle retanguloTop;
+    private Rectangle retanguloBot;
 
 
     //Atributos de configuração
@@ -39,12 +46,16 @@ public class FlappyBird extends ApplicationAdapter {
     private  float deltaTime;
     private float alturaEntreCanosRandomica;
     private boolean marcouPonto = false;
-
+    private ShapeRenderer shapeRenderer;
 	public void create () {
         //Inicializando os elementos no app
         Gdx.app.log("Create", "Inicializando o jogo");
         batch = new SpriteBatch();
         numeroRandomico = new Random();
+        passaroCirculo = new Circle();
+        retanguloBot = new Rectangle();
+        retanguloTop = new Rectangle();
+        shapeRenderer =  new ShapeRenderer();
         fonte = new BitmapFont();
         fonte.setColor(com.badlogic.gdx.graphics.Color.WHITE);
         fonte.getData().setScale(4);
@@ -95,9 +106,9 @@ public class FlappyBird extends ApplicationAdapter {
             posicaoMovimentoCanoHorizontal -= deltaTime * 100;//
             velocidadeQueda++;
 
+            //Fazendo o passaro pular.
             if (Gdx.input.justTouched()) {
-                //Gdx.app.log("Toque", "Toque na tela!");
-                velocidadeQueda = -15;
+                velocidadeQueda = -13;
             }
 
             //Limitação de queda
@@ -120,14 +131,47 @@ public class FlappyBird extends ApplicationAdapter {
             }
         }
 
-            batch.begin();//inciando a exibição da textura
+        batch.begin();//inciando a exibição da textura
 
-            batch.draw(fundo, 0, 0, larguraDispositivo, alturaDispositivo); //defininfo o prenchimento da tela com o fundo
-            batch.draw(canoTop, posicaoMovimentoCanoHorizontal, alturaDispositivo / 2 + espacoEntreCanos / 2 + alturaEntreCanosRandomica); //desenhando o cano top na tela
-            batch.draw(canoBot, posicaoMovimentoCanoHorizontal, alturaDispositivo / 2 - canoBot.getHeight() - espacoEntreCanos / 2 + alturaEntreCanosRandomica); //desenhando o cano bop na tela
-            batch.draw(passaros[(int) variacao], 120, posicaoInicialVertical);
-            fonte.draw(batch, String.valueOf(pontuacao), larguraDispositivo/2, alturaDispositivo-20);
-            batch.end();//Finalizando
+        batch.draw(fundo, 0, 0, larguraDispositivo, alturaDispositivo); //defininfo o prenchimento da tela com o fundo
+        batch.draw(canoTop, posicaoMovimentoCanoHorizontal, alturaDispositivo / 2 + espacoEntreCanos / 2 + alturaEntreCanosRandomica); //desenhando o cano top na tela
+        batch.draw(canoBot, posicaoMovimentoCanoHorizontal, alturaDispositivo / 2 - canoBot.getHeight() - espacoEntreCanos / 2 + alturaEntreCanosRandomica); //desenhando o cano bop na tela
+        batch.draw(passaros[(int) variacao], 120, posicaoInicialVertical);
+        fonte.draw(batch, String.valueOf(pontuacao), larguraDispositivo/2, alturaDispositivo-20);
+        batch.end();//Finalizando
+
+        //Passaro
+        passaroCirculo.set(120+passaros[0].getWidth()/2, posicaoInicialVertical+passaros[0].getHeight()/2,passaros[0].getWidth()/2);
+        //cano baixo
+        retanguloBot = new Rectangle(
+                posicaoMovimentoCanoHorizontal, //posição x
+                alturaDispositivo / 2 - canoBot.getHeight() - espacoEntreCanos / 2 + alturaEntreCanosRandomica, //posição y
+                canoBot.getWidth(), //largura do cano
+                canoBot.getHeight() //altura do cano baixo
+
+        );
+
+        retanguloTop = new Rectangle(
+                posicaoMovimentoCanoHorizontal,
+                alturaDispositivo / 2 + espacoEntreCanos / 2 + alturaEntreCanosRandomica,
+                canoTop.getWidth(),
+                canoTop.getHeight()
+        );
+
+        //desenhando formas
+//        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+//            shapeRenderer.circle(passaroCirculo.x, passaroCirculo.y, passaroCirculo.radius); //desenhando o circulo
+//            shapeRenderer.rect(retanguloBot.x, retanguloBot.y, retanguloBot.width, retanguloBot.height); //desenhando o retangulo
+//            shapeRenderer.rect(retanguloTop.x,retanguloTop.y, retanguloTop.width, retanguloTop.height);
+//            shapeRenderer.setColor(com.badlogic.gdx.graphics.Color.RED);
+//        shapeRenderer.end();
+
+
+        //testando colisão[]
+        if (Intersector.overlaps(passaroCirculo, retanguloBot) || Intersector.overlaps(passaroCirculo, retanguloTop)) {
+
+            Gdx.app.log("Colisão", "Houve Colisão");
+        }
 	}
 
 }
