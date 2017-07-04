@@ -24,8 +24,10 @@ public class FlappyBird extends ApplicationAdapter {
     private Texture fundo; //fundo do app
     private Texture canoBot;
     private  Texture canoTop;
+    private Texture gameOver;
     private Random numeroRandomico;
     private BitmapFont fonte;
+    private BitmapFont mensagem;
     private Circle passaroCirculo;
     private Rectangle retanguloTop;
     private Rectangle retanguloBot;
@@ -35,12 +37,12 @@ public class FlappyBird extends ApplicationAdapter {
 
     private int larguraDispositivo;
     private int alturaDispositivo;
-    private int estadoJogo = 0; // 0 -> jogo nao iniciado || 1 -> Jogo Iniciado
+    private int estadoJogo = 0; // 0 -> jogo nao iniciado || 1 -> Jogo Iniciado ||  2 -> Game Over
     private int pontuacao = 0; //pontuação do jogo
 
     private float variacao =0;
     private float velocidadeQueda = 0;
-    private  float posicaoInicialVertical = 0;
+    private float posicaoInicialVertical = 0;
     private float posicaoMovimentoCanoHorizontal;
     private float espacoEntreCanos;
     private  float deltaTime;
@@ -56,9 +58,15 @@ public class FlappyBird extends ApplicationAdapter {
         retanguloBot = new Rectangle();
         retanguloTop = new Rectangle();
         shapeRenderer =  new ShapeRenderer();
+
         fonte = new BitmapFont();
+        mensagem = new BitmapFont();
+
+
         fonte.setColor(com.badlogic.gdx.graphics.Color.WHITE);
         fonte.getData().setScale(4);
+        mensagem.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+        mensagem.getData().setScale(3);
 
         passaros = new Texture[3]; // array de texturas
 
@@ -73,6 +81,9 @@ public class FlappyBird extends ApplicationAdapter {
         //instanciando os canos
         canoTop = new Texture("cano_topo.png");
         canoBot = new Texture("cano_baixo.png");
+
+        //instanciando a tela de Game Over
+        gameOver = new Texture("game_over.png");
 
         espacoEntreCanos = 300;
 
@@ -103,30 +114,41 @@ public class FlappyBird extends ApplicationAdapter {
 
         }else {
 
-            posicaoMovimentoCanoHorizontal -= deltaTime * 100;//
-            velocidadeQueda++;
-
-            //Fazendo o passaro pular.
-            if (Gdx.input.justTouched()) {
-                velocidadeQueda = -13;
-            }
-
+            velocidadeQueda++; //queda do passaro
             //Limitação de queda
             if (posicaoInicialVertical > 10 || velocidadeQueda < 0) {
                 posicaoInicialVertical = posicaoInicialVertical - velocidadeQueda;
             }
 
-            //limitando e reseta o movimento do cano
-            if (posicaoMovimentoCanoHorizontal < -canoTop.getWidth()) {
-                posicaoMovimentoCanoHorizontal = larguraDispositivo;
-                alturaEntreCanosRandomica = numeroRandomico.nextInt(400) - 200;
-                marcouPonto = false;
-            }
-            //verifica pontuação
-            if (posicaoMovimentoCanoHorizontal < 120){
-                if (!marcouPonto) {
-                    pontuacao++;
-                    marcouPonto = true;
+            if (estadoJogo == 1) //Iniciado
+            {
+                posicaoMovimentoCanoHorizontal -= deltaTime * 100;//
+
+                //Fazendo o passaro pular.
+                if (Gdx.input.justTouched()) {
+                    velocidadeQueda = -13;
+                }
+
+                //limitando e reseta o movimento do cano
+                if (posicaoMovimentoCanoHorizontal < -canoTop.getWidth()) {
+                    posicaoMovimentoCanoHorizontal = larguraDispositivo;
+                    alturaEntreCanosRandomica = numeroRandomico.nextInt(400) - 200;
+                    marcouPonto = false;
+                }
+                //verifica pontuação
+                if (posicaoMovimentoCanoHorizontal < 120){
+                    if (!marcouPonto) {
+                        pontuacao++;
+                        marcouPonto = true;
+                    }
+                }
+            }else{ //tela de game over
+                if (Gdx.input.justTouched()) {
+                    estadoJogo = 0;
+                    pontuacao = 0;
+                    velocidadeQueda = 0;
+                    posicaoInicialVertical = alturaDispositivo/2;
+                    posicaoMovimentoCanoHorizontal = larguraDispositivo-200;
                 }
             }
         }
@@ -138,6 +160,12 @@ public class FlappyBird extends ApplicationAdapter {
         batch.draw(canoBot, posicaoMovimentoCanoHorizontal, alturaDispositivo / 2 - canoBot.getHeight() - espacoEntreCanos / 2 + alturaEntreCanosRandomica); //desenhando o cano bop na tela
         batch.draw(passaros[(int) variacao], 120, posicaoInicialVertical);
         fonte.draw(batch, String.valueOf(pontuacao), larguraDispositivo/2, alturaDispositivo-20);
+
+        //somente quando colidir com o cano
+        if (estadoJogo == 2){
+            batch.draw(gameOver, larguraDispositivo/2 - gameOver.getWidth()/2,alturaDispositivo/2);
+            mensagem.draw(batch,"Toque para reiniciar!", larguraDispositivo/2 - 200, alturaDispositivo/2 - gameOver.getHeight()/2);
+        }
         batch.end();//Finalizando
 
         //Passaro
@@ -168,8 +196,8 @@ public class FlappyBird extends ApplicationAdapter {
 
 
         //testando colisão[]
-        if (Intersector.overlaps(passaroCirculo, retanguloBot) || Intersector.overlaps(passaroCirculo, retanguloTop)) {
-
+        if (Intersector.overlaps(passaroCirculo, retanguloBot) || Intersector.overlaps(passaroCirculo, retanguloTop) || (posicaoInicialVertical <= 0) || (posicaoInicialVertical >= alturaDispositivo)) {
+            estadoJogo = 2;
             Gdx.app.log("Colisão", "Houve Colisão");
         }
 	}
